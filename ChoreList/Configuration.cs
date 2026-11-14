@@ -41,6 +41,9 @@ public class Configuration : IPluginConfiguration
     /// <summary>Open the Chore List window every time you log in.</summary>
     public bool OpenOnLogin { get; set; } = true;
 
+    /// <summary>Show the "Chores 3/7" counter in the server info bar at the top of the screen.</summary>
+    public bool ShowTopBar { get; set; } = true;
+
     /// <summary>Chores every character sees.</summary>
     public List<Chore> Shared { get; set; } = new();
 

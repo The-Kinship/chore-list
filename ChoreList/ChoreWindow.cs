@@ -72,6 +72,8 @@ public sealed class ChoreWindow : Window
         ImGui.Separator();
         var open = cfg.OpenOnLogin;
         if (ImGui.Checkbox("Open when I log in", ref open)) { cfg.OpenOnLogin = open; cfg.Save(); }
+        var bar = cfg.ShowTopBar;
+        if (ImGui.Checkbox("Show counter in the top bar", ref bar)) { cfg.ShowTopBar = bar; cfg.Save(); }
         var now = DateTime.UtcNow;
         ImGui.TextColored(Dim, $"Daily reset in {Resets.Until(Resets.NextDaily(now), now)}, weekly in {Resets.Until(Resets.NextWeekly(now), now)}");
         ImGui.TextColored(Dim, "Right-click a chore or heading for more options.");

@@ -17,6 +17,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;
     [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
     [PluginService] internal static IPlayerState PlayerState { get; private set; } = null!;
+    [PluginService] internal static IDtrBar DtrBar { get; private set; } = null!;
 
     internal static Configuration Config { get; private set; } = null!;
 
@@ -34,6 +35,7 @@ public sealed class Plugin : IDalamudPlugin
 
     private readonly WindowSystem windows = new("ChoreList");
     private readonly ChoreWindow window;
+    private readonly TopBar topBar;
 
     public Plugin()
     {
@@ -41,11 +43,13 @@ public sealed class Plugin : IDalamudPlugin
 
         window = new ChoreWindow();
         windows.AddWindow(window);
+        topBar = new TopBar(Toggle);
 
         foreach (var cmd in CommandNames)
             CommandManager.AddHandler(cmd, new CommandInfo(OnCommand) { HelpMessage = "Open or close Rafter Cat's Chore List." });
 
         PluginInterface.UiBuilder.Draw += Resets.Tick;
+        PluginInterface.UiBuilder.Draw += topBar.Update;
         PluginInterface.UiBuilder.Draw += windows.Draw;
         PluginInterface.UiBuilder.OpenMainUi += Toggle;
         PluginInterface.UiBuilder.OpenConfigUi += Toggle;
@@ -68,10 +72,12 @@ public sealed class Plugin : IDalamudPlugin
     {
         ClientState.Login -= OnLogin;
         PluginInterface.UiBuilder.Draw -= Resets.Tick;
+        PluginInterface.UiBuilder.Draw -= topBar.Update;
         PluginInterface.UiBuilder.Draw -= windows.Draw;
         PluginInterface.UiBuilder.OpenMainUi -= Toggle;
         PluginInterface.UiBuilder.OpenConfigUi -= Toggle;
         foreach (var cmd in CommandNames) CommandManager.RemoveHandler(cmd);
         windows.RemoveAllWindows();
+        topBar.Dispose();
     }
 }
