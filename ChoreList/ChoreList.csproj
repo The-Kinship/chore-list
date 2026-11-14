@@ -1,6 +1,6 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.2.0.0</Version>
+    <Version>0.3.0.0</Version>
     <Description>Rafter Cat's Chore List: a simple to-do list with checkboxes.</Description>
     <PackageProjectUrl>https://github.com/The-Kinship/chore-list</PackageProjectUrl>
     <IsPackable>false</IsPackable>
