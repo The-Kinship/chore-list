@@ -45,6 +45,7 @@ public sealed class Plugin : IDalamudPlugin
         foreach (var cmd in CommandNames)
             CommandManager.AddHandler(cmd, new CommandInfo(OnCommand) { HelpMessage = "Open or close Rafter Cat's Chore List." });
 
+        PluginInterface.UiBuilder.Draw += Resets.Tick;
         PluginInterface.UiBuilder.Draw += windows.Draw;
         PluginInterface.UiBuilder.OpenMainUi += Toggle;
         PluginInterface.UiBuilder.OpenConfigUi += Toggle;
@@ -66,6 +67,7 @@ public sealed class Plugin : IDalamudPlugin
     public void Dispose()
     {
         ClientState.Login -= OnLogin;
+        PluginInterface.UiBuilder.Draw -= Resets.Tick;
         PluginInterface.UiBuilder.Draw -= windows.Draw;
         PluginInterface.UiBuilder.OpenMainUi -= Toggle;
         PluginInterface.UiBuilder.OpenConfigUi -= Toggle;

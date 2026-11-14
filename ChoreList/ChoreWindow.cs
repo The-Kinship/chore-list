@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
@@ -15,6 +16,11 @@ public sealed class ChoreWindow : Window
     private readonly Dictionary<string, string> typing = new();
     /// <summary>List whose add box should get the keyboard back next frame (after pressing Enter).</summary>
     private string refocus = "";
+    /// <summary>Reset chosen in each list's add box, by list.</summary>
+    private readonly Dictionary<string, ResetKind> newReset = new();
+
+    private static readonly ResetKind[] Kinds = { ResetKind.Never, ResetKind.Daily, ResetKind.Weekly };
+    private static string KindName(ResetKind k) => k switch { ResetKind.Daily => "Daily", ResetKind.Weekly => "Weekly", _ => "Never" };
 
     public ChoreWindow() : base("Rafter Cat's Chore List##ChoreListMain")
     {
@@ -49,7 +55,9 @@ public sealed class ChoreWindow : Window
         ImGui.Separator();
         var open = cfg.OpenOnLogin;
         if (ImGui.Checkbox("Open when I log in", ref open)) { cfg.OpenOnLogin = open; cfg.Save(); }
-        ImGui.TextColored(Dim, "Right-click a chore to delete it.");
+        var now = DateTime.UtcNow;
+        ImGui.TextColored(Dim, $"Daily reset in {Resets.Until(Resets.NextDaily(now), now)}, weekly in {Resets.Until(Resets.NextWeekly(now), now)}");
+        ImGui.TextColored(Dim, "Right-click a chore to change its reset or delete it.");
     }
 
     /// <summary>One list: a heading, its chores with checkboxes, and a box to add more.</summary>
@@ -68,22 +76,36 @@ public sealed class ChoreWindow : Window
             var ticked = c.Done;
             // "##" in a label hides what follows, so break it up if someone types it.
             var label = c.Text.Replace("##", "# #");
+            if (c.Reset == ResetKind.Daily) label += "  (daily)";
+            else if (c.Reset == ResetKind.Weekly) label += "  (weekly)";
             if (c.Done) ImGui.PushStyleColor(ImGuiCol.Text, Dim);
             var changed = ImGui.Checkbox(label + "##tick", ref ticked);
             if (c.Done) ImGui.PopStyleColor();
             if (changed)
             {
                 c.Done = ticked;
-                c.DoneAt = ticked ? System.DateTime.UtcNow : null;
+                c.DoneAt = ticked ? DateTime.UtcNow : null;
                 Plugin.Config.Save();
             }
-            if (ImGui.BeginPopupContextItem("menu"))
+            var menuOpen = ImGui.BeginPopupContextItem("menu");
+            if (menuOpen)
             {
                 ImGui.TextColored(Dim, c.Text);
+                ImGui.Separator();
+                ImGui.TextColored(Dim, "Clears itself:");
+                foreach (var k in Kinds)
+                {
+                    if (ImGui.RadioButton(KindName(k) + "##r" + (int)k, c.Reset == k))
+                    {
+                        c.Reset = k;
+                        Plugin.Config.Save();
+                    }
+                }
                 ImGui.Separator();
                 if (ImGui.Selectable("Delete")) remove = c;
                 ImGui.EndPopup();
             }
+
             ImGui.PopID();
         }
 
@@ -93,14 +115,24 @@ public sealed class ChoreWindow : Window
         typing.TryGetValue(key, out var text);
         text ??= "";
         if (refocus == key) { ImGui.SetKeyboardFocusHere(); refocus = ""; }
-        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - 50f);
+        newReset.TryGetValue(key, out var kind);
+        ImGui.SetNextItemWidth(Math.Max(60f, ImGui.GetContentRegionAvail().X - 140f));
         var enter = ImGui.InputText("##add", ref text, 120, ImGuiInputTextFlags.EnterReturnsTrue);
         typing[key] = text;
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(80f);
+        if (ImGui.BeginCombo("##kind", KindName(kind)))
+        {
+            foreach (var k in Kinds)
+                if (ImGui.Selectable(KindName(k), k == kind)) { kind = k; newReset[key] = k; }
+            ImGui.EndCombo();
+        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("When a ticked chore clears itself:\nDaily = at the daily reset\nWeekly = at the Tuesday reset\nNever = stays ticked until you untick it");
         ImGui.SameLine();
         var clicked = ImGui.Button("Add");
         if ((enter || clicked) && text.Trim().Length > 0)
         {
-            chores.Add(new Chore { Text = text.Trim() });
+            chores.Add(new Chore { Text = text.Trim(), Reset = kind });
             typing[key] = "";
             Plugin.Config.Save();
             if (enter) refocus = key;   // keep typing the next one
