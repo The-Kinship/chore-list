@@ -1,0 +1,1 @@
+0.1.0: First version. One list for all your characters plus one for each character. Type a chore and press Enter, tick it off when done, right-click to delete. Opens when you log in (can be switched off). /chores or /chorelist to open.
