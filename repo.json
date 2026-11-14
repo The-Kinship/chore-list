@@ -1,0 +1,26 @@
+[
+  {
+    "Author": "The Kinship",
+    "Name": "Rafter Cat's Chore List",
+    "InternalName": "ChoreList",
+    "AssemblyVersion": "0.1.0.0",
+    "Punchline": "A simple to-do list: type your own chores and tick them off.",
+    "Description": "A small to-do list window that opens when you log in. Type /chores to open it.\n\n- One list shared by all your characters, plus one list for each character\n- Type a chore, press Enter, tick it off when it's done\n- Right-click a chore to delete it\n\nIt doesn't read or change anything in the game. Your lists are saved on your own PC.",
+    "ApplicableVersion": "any",
+    "RepoUrl": "https://github.com/The-Kinship/chore-list",
+    "Tags": [
+      "todo",
+      "checklist",
+      "chores"
+    ],
+    "IconUrl": "https://raw.githubusercontent.com/The-Kinship/chore-list/main/images/icon.png",
+    "DalamudApiLevel": 15,
+    "IsHide": false,
+    "IsTestingExclusive": false,
+    "LastUpdate": 1794670183,
+    "DownloadLinkInstall": "https://github.com/The-Kinship/chore-list/releases/download/latest/latest.zip",
+    "DownloadLinkTesting": "https://github.com/The-Kinship/chore-list/releases/download/latest/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/The-Kinship/chore-list/releases/download/latest/latest.zip",
+    "Changelog": "0.1.0: First version. One list for all your characters plus one for each character. Type a chore and press Enter, tick it off when done, right-click to delete. Opens when you log in (can be switched off). /chores or /chorelist to open."
+  }
+]
