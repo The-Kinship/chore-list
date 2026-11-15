@@ -23,6 +23,13 @@ public class Chore
     public ResetKind Reset { get; set; } = ResetKind.Never;
     /// <summary>Heading this chore sits under (empty = no heading). Used from piece 3 on.</summary>
     public string Group { get; set; } = "";
+
+    /// <summary>Due date (a calendar date, your local time), or none.</summary>
+    public DateTime? Due { get; set; }
+    /// <summary>Start date, for things like events (Dec 1 to Dec 15), or none.</summary>
+    public DateTime? Start { get; set; }
+    /// <summary>Repeat every this many days (0 = no): ticking it moves the due date ahead.</summary>
+    public int RepeatDays { get; set; }
 }
 
 [Serializable]

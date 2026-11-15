@@ -42,6 +42,8 @@ public sealed class TopBar : IDisposable
         var list = chores.ToList();
         var done = list.Count(c => c.Done);
         var want = list.Count == 0 ? "Chores" : done == list.Count ? $"Chores {done}/{list.Count} done!" : $"Chores {done}/{list.Count}";
+        var due = list.Count(Dates.Urgent);
+        if (due > 0) want += $" - {due} due!";
         if (want != lastText) { lastText = want; SetText("Text", want); }
     }
 

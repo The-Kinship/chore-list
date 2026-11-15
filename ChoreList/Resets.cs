@@ -48,6 +48,7 @@ public static class Resets
         var changed = false;
         foreach (var c in chores)
         {
+            if (Dates.RepeatCheck(c)) { changed = true; continue; }
             if (!c.Done || c.Reset == ResetKind.Never) continue;
             var since = c.Reset == ResetKind.Daily ? LastDaily(now) : LastWeekly(now);
             if (c.DoneAt == null || c.DoneAt.Value < since)

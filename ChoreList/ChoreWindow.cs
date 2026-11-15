@@ -134,10 +134,20 @@ public sealed class ChoreWindow : Window
         {
             c.Done = ticked;
             c.DoneAt = ticked ? DateTime.UtcNow : null;
+            if (ticked) Dates.OnTicked(c);
             Plugin.Config.Save();
         }
+        ImGui.OpenPopupOnItemClick("menu", ImGuiPopupFlags.MouseButtonRight);
 
-        if (ImGui.BeginPopupContextItem("menu"))
+        // Due / start / repeat status, in words.
+        var status = Dates.Status(c, out var statusColor);
+        if (status.Length > 0)
+        {
+            ImGui.SameLine();
+            ImGui.TextColored(statusColor, status);
+        }
+
+        if (ImGui.BeginPopup("menu"))
         {
             ImGui.TextColored(Dim, "Chore");
             var text = c.Text;
@@ -170,6 +180,28 @@ public sealed class ChoreWindow : Window
                 pending = () => MoveToHeading(chores, chore, chosen);
             }
 
+            ImGui.Spacing();
+            ImGui.TextColored(Dim, "Due by:");
+            ImGui.SameLine(90f);
+            if (DatePicker("due", c.Due, out var due)) { c.Due = due; Plugin.Config.Save(); }
+            ImGui.TextColored(Dim, "Starts:");
+            ImGui.SameLine(90f);
+            if (DatePicker("start", c.Start, out var start)) { c.Start = start; Plugin.Config.Save(); }
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip("For events: the chore shows \"starts ...\" until this date.");
+            ImGui.TextColored(Dim, "Repeat every");
+            ImGui.SameLine(90f);
+            var every = c.RepeatDays;
+            ImGui.SetNextItemWidth(90f);
+            if (ImGui.InputInt("days (0 = no)##repeat", ref every))
+            {
+                c.RepeatDays = Math.Clamp(every, 0, 365);
+                if (c.RepeatDays > 0 && c.Due == null) c.Due = DateTime.Today.AddDays(c.RepeatDays);
+                Plugin.Config.Save();
+            }
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Each time you tick it, the due date moves this many days ahead.\n"
+                    + $"It unticks itself {Dates.RepeatHeadsUpDays} days before the next due date.\nExample: visit my house every 30 days.");
+
             ImGui.Separator();
             if (ImGui.Selectable("Move up")) { var chore = c; pending = () => MoveChore(chores, chore, -1); }
             if (ImGui.Selectable("Move down")) { var chore = c; pending = () => MoveChore(chores, chore, +1); }
@@ -178,6 +210,55 @@ public sealed class ChoreWindow : Window
             ImGui.EndPopup();
         }
         ImGui.PopID();
+    }
+
+    private static readonly string[] Months =
+        { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+    /// <summary>A date chooser: month, day and year drop-downs, plus Clear. True when the date changes.</summary>
+    private static bool DatePicker(string id, DateTime? value, out DateTime? result)
+    {
+        result = value;
+        ImGui.PushID(id);
+        var changed = false;
+        if (value == null)
+        {
+            if (ImGui.SmallButton("Set a date")) { result = DateTime.Today; changed = true; }
+            ImGui.PopID();
+            return changed;
+        }
+
+        var d = value.Value.Date;
+        int month = d.Month, day = d.Day, year = d.Year;
+        ImGui.SetNextItemWidth(60f);
+        if (ImGui.BeginCombo("##m", Months[month - 1]))
+        {
+            for (var m = 1; m <= 12; m++)
+                if (ImGui.Selectable(Months[m - 1], m == month)) { month = m; changed = true; }
+            ImGui.EndCombo();
+        }
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(50f);
+        if (ImGui.BeginCombo("##d", day.ToString()))
+        {
+            for (var x = 1; x <= DateTime.DaysInMonth(year, month); x++)
+                if (ImGui.Selectable(x.ToString(), x == day)) { day = x; changed = true; }
+            ImGui.EndCombo();
+        }
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(70f);
+        if (ImGui.BeginCombo("##y", year.ToString()))
+        {
+            for (var y = DateTime.Today.Year - 1; y <= DateTime.Today.Year + 2; y++)
+                if (ImGui.Selectable(y.ToString(), y == year)) { year = y; changed = true; }
+            ImGui.EndCombo();
+        }
+        ImGui.SameLine();
+        if (ImGui.SmallButton("Clear")) { result = null; ImGui.PopID(); return true; }
+
+        if (changed) result = new DateTime(year, month, Math.Min(day, DateTime.DaysInMonth(year, month)));
+        ImGui.PopID();
+        return changed;
     }
 
     /// <summary>Right-click menu on a heading: rename it, move it up or down, or remove the heading (keeping its chores).</summary>
